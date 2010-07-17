@@ -1,0 +1,51 @@
+= Mongoid::Atomic
+
+Atomic updates for your Mongoid models.
+
+== Installation
+
+Add to Gemfile:
+  
+    gem 'mongoid_atomic'
+
+== Getting Started
+
+Include the module in models where you want it:
+
+    class User
+      include Mongoid::Document
+      include Mongoid::Atomic
+
+      field :username
+      field :groups, :type => Array, :default => ['users']
+      field :post_count, :type => Integer
+    end
+
+== Making updates, the easy way!
+
+A simple example, increment a post:
+
+    u = User.find('4c31146e4dd962d09f000004')
+    u.atomic_inc(:post_count) 
+
+.. or join a group:
+  
+    ...
+    u.atomic_push(:groups, 'posters')
+    
+    
+.. or remove a field:
+
+    ...
+    u.atomic_unset(:deprecated_field)
+    
+.. or change your name:
+
+    ...
+    u.atomic_set(:username, 'bill')
+
+.. or do all of it at once:
+
+    ...
+    u.atomic_update :inc => {:post_count => 1}, :set => {:username => 'bobby'}, :pushAll => {:groups => %w[rubyists developers]}
+
