@@ -21,12 +21,27 @@ Include the module in models where you want it:
       field :post_count, :type => Integer
     end
 
-== Making updates, the easy way!
+== Easy and Human Readable Atomic Updates!
 
-A simple example, increment a post:
+A simple example. To increment a post count:
 
-    u = User.find('4c31146e4dd962d09f000004')
+    u = User.where(:name => 'Bill').first
     u.atomic_inc(:post_count) 
+
+.. which might fit nicely in your Post model:
+
+    class Post
+      include Mongoid::Document
+      ...
+      references_one :user
+      ...
+      after_create :update_post_count
+      ...
+      private
+      def update_post_count
+        self.user.atomic_inc :post_count
+      end
+    end
 
 .. or join a group:
   
@@ -49,3 +64,24 @@ A simple example, increment a post:
     ...
     u.atomic_update :inc => {:post_count => 1}, :set => {:username => 'bobby'}, :pushAll => {:groups => %w[rubyists developers]}
 
+== A Note About Attribute Consistency
+
+No effort is made to ensure consistency between the server and instance attributes. There's a good reason for this: the operations are performed inside of the Mongo server and we often don't care about the result.  If you need to ensure the consistency of your attributes after an update, call the Mongoid reload method.  Example:
+
+    >> u = User.first
+    => #<User....>
+    
+    >> u.post_count
+    => 0
+    
+    >> u.atomic_inc :post_count
+    => nil
+    
+    >> u.post_count
+    => 0
+    
+    >> u.reload
+    => #<User....>
+    
+    >> u.post_count
+    >= 1
